@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="20037" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
+<document type="com.apple.InterfaceBuilder3.CocoaTouch.Storyboard.XIB" version="3.0" toolsVersion="21225" targetRuntime="iOS.CocoaTouch" propertyAccessControl="none" useAutolayout="YES" useTraitCollections="YES" useSafeAreas="YES" colorMatched="YES" initialViewController="BYZ-38-t0r">
     <device id="ipad7_9" orientation="landscape" layout="fullscreen" appearance="dark"/>
     <dependencies>
         <deployment identifier="iOS"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="20020"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.IBCocoaTouchPlugin" version="21207"/>
         <capability name="Safe area layout guides" minToolsVersion="9.0"/>
         <capability name="System colors in document resources" minToolsVersion="11.0"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
@@ -17,8 +17,8 @@
                         <rect key="frame" x="0.0" y="0.0" width="1133" height="744"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <glkView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" misplaced="YES" enableSetNeedsDisplay="NO" translatesAutoresizingMaskIntoConstraints="NO" id="397-ZU-7q0" customClass="GSStreamView">
-                                <rect key="frame" x="0.0" y="328" width="1133" height="336"/>
+                            <glkView opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleAspectFit" enableSetNeedsDisplay="NO" translatesAutoresizingMaskIntoConstraints="NO" id="397-ZU-7q0" customClass="GSStreamView">
+                                <rect key="frame" x="0.0" y="328" width="550" height="336"/>
                                 <color key="backgroundColor" white="0.0" alpha="0.0" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                             </glkView>
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qz2-mi-QKk">
@@ -223,10 +223,14 @@
                                     <constraint firstAttribute="bottom" secondItem="PLf-jy-HJc" secondAttribute="bottom" constant="10" id="zaq-gI-kWy"/>
                                 </constraints>
                             </view>
+                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="H4m-Mt-8W4">
+                                <rect key="frame" x="583" y="328" width="550" height="336"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            </imageView>
                             <containerView hidden="YES" opaque="NO" contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="9xq-wj-fkx">
-                                <rect key="frame" x="0.0" y="544" width="1133" height="200"/>
+                                <rect key="frame" x="0.0" y="193" width="1133" height="120"/>
                                 <constraints>
-                                    <constraint firstAttribute="height" constant="200" id="qbt-zd-C0I"/>
+                                    <constraint firstAttribute="height" constant="120" id="qbt-zd-C0I"/>
                                 </constraints>
                                 <connections>
                                     <segue destination="KNo-gh-sP0" kind="embed" identifier="WhiteBalanceSegue" id="ZED-3n-yin"/>
@@ -240,14 +244,14 @@
                             <constraint firstAttribute="bottom" secondItem="397-ZU-7q0" secondAttribute="bottom" constant="80" id="C19-Wc-8FI"/>
                             <constraint firstAttribute="bottom" secondItem="M3K-2T-FUd" secondAttribute="bottom" id="Neb-O2-De8"/>
                             <constraint firstItem="9xq-wj-fkx" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="QCH-R9-nX1"/>
-                            <constraint firstItem="397-ZU-7q0" firstAttribute="top" secondItem="qz2-mi-QKk" secondAttribute="bottom" id="amR-Zs-CKN"/>
+                            <constraint firstItem="397-ZU-7q0" firstAttribute="top" secondItem="qz2-mi-QKk" secondAttribute="bottom" constant="154" id="amR-Zs-CKN"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="M3K-2T-FUd" secondAttribute="trailing" id="eJj-qo-d0c"/>
                             <constraint firstItem="397-ZU-7q0" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="kIr-zk-nWu"/>
                             <constraint firstItem="6Tk-OE-BBY" firstAttribute="trailing" secondItem="qz2-mi-QKk" secondAttribute="trailing" constant="20" id="kTF-kR-z0Z"/>
                             <constraint firstItem="qz2-mi-QKk" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" constant="20" id="oZC-Fr-L1M"/>
                             <constraint firstItem="9xq-wj-fkx" firstAttribute="leading" secondItem="6Tk-OE-BBY" secondAttribute="leading" id="w2R-A8-Pb6"/>
-                            <constraint firstAttribute="bottom" secondItem="9xq-wj-fkx" secondAttribute="bottom" id="wWg-UX-B4l"/>
-                            <constraint firstItem="397-ZU-7q0" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" id="xdy-pk-fND"/>
+                            <constraint firstAttribute="bottom" secondItem="9xq-wj-fkx" secondAttribute="bottom" constant="431" id="wWg-UX-B4l"/>
+                            <constraint firstItem="397-ZU-7q0" firstAttribute="trailing" secondItem="6Tk-OE-BBY" secondAttribute="trailing" constant="-583" id="xdy-pk-fND"/>
                             <constraint firstItem="qz2-mi-QKk" firstAttribute="top" secondItem="6Tk-OE-BBY" secondAttribute="top" id="yIH-sa-4Hl"/>
                         </constraints>
                     </view>
@@ -263,6 +267,7 @@
                         <outlet property="candidateLabel8" destination="3mk-uK-I79" id="n0c-QK-Rz2"/>
                         <outlet property="candidateLabel9" destination="bgi-aF-u5a" id="4JA-aF-LiM"/>
                         <outlet property="captureButton" destination="PLf-jy-HJc" id="1wf-pL-jaq"/>
+                        <outlet property="depthImageView" destination="H4m-Mt-8W4" id="j9X-jp-4bf"/>
                         <outlet property="droneLabel" destination="YFb-RL-XR8" id="gOy-YD-idE"/>
                         <outlet property="remoteLabel" destination="Std-NT-dqW" id="1Td-pQ-eOM"/>
                         <outlet property="streamView" destination="397-ZU-7q0" id="Pbr-o2-tSa"/>
@@ -330,7 +335,7 @@
             <objects>
                 <viewController id="KNo-gh-sP0" customClass="WhiteBalanceController" customModule="Camera" customModuleProvider="target" sceneMemberID="viewController">
                     <view key="view" contentMode="scaleToFill" id="PIK-8h-bdF">
-                        <rect key="frame" x="0.0" y="0.0" width="1133" height="200"/>
+                        <rect key="frame" x="0.0" y="0.0" width="1133" height="120"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="kW2-J9-dQA">
@@ -344,7 +349,7 @@
                                 </connections>
                             </button>
                             <pickerView contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="zrU-0w-eaW">
-                                <rect key="frame" x="0.0" y="38" width="1133" height="162"/>
+                                <rect key="frame" x="0.0" y="-42" width="1133" height="162"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="162" id="owr-Hm-SQP"/>
                                 </constraints>

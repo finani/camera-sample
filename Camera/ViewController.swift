@@ -32,6 +32,12 @@ import UIKit
 import GroundSdk
 
 class ViewController: UIViewController, WhiteBalanceDelegate {
+    
+    private var count = 0;
+    
+    private var depthData: Data?
+    
+    private var depthImage: UIImage?
 
     /// Ground SDk instance.
     private let groundSdk = GroundSdk()
@@ -84,6 +90,8 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
     // User Interface:
     /// Video stream view.
     @IBOutlet weak var streamView: StreamView!
+    /// Depth image view.
+    @IBOutlet weak var depthImageView: UIImageView!
     /// Drone state label.
     @IBOutlet weak var droneLabel: UILabel!
     /// Remote state label.
@@ -160,6 +168,12 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
                 }
             }
         }
+        
+//        // UI View (not working..)
+//        DispatchQueue.global().async {
+//            self.depthImageView.backgroundColor = .blue
+//            self.depthImageView.image = UIImage(data: self.depthData ?? Data()) ?? UIImage()
+//        }
     }
 
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -314,8 +328,8 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
 
                         self.stream = liveStream
 
-                        if let stream = self.stream {
-//                            self.sink = stream.openSink(config: GlRenderSinkCore.config(listener: self))
+                        if self.stream != nil {
+//                            self.sink = liveStream.openSink(config: GlRenderSinkCore.config(listener: self))
 
                             let dispatchQueue = DispatchQueue.global()
                             self.sink = liveStream.openYuvSink(queue: dispatchQueue, listener: self)
@@ -323,7 +337,7 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
 
                         _ = liveStream.play()
                         
-                        print("StreamListener liveStream: \(liveStream.state)")
+//                        print("StreamListener liveStream: \(liveStream.state)")
                     }
                     
                 }
@@ -347,16 +361,108 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
     }
 }
 
+// .frontCamera : 1_920_000 / 2_880_000
+// .verticalCamera : 76_800 / 115_200
+// .frontStereoCameraLeft : 1_013_760 / 1_520_640
+// .frontStereoCameraRight : 1_013_760 / 1_520_640
+// .disparity : 15_840 / 33_792
+
+// focal_pixel = (image_width_in_pixels * 0.5) / tan(HFOV * 0.5 * PI/180)
+// focal_pixel = (176 * 0.5) / tan(110 * 0.5 * PI/180) = 61.6182633625
+
+// focal_pixel = (image_height_in_pixels * 0.5) / tan(VFOV * 0.5 * PI/180)
+// focal_pixel = (90 * 0.5) / tan(72 * 0.5 * PI/180) = 61.9371864212
+
+// focal_pixel = (61.6182633625 + 61.9371864212) / 2 = 61.7777248918
+
+
+// focal_pixel = min_distance / base_distance * max_disparity
+// focal_pixel = 0.3 / 0.07 * sqrt(176^2 + 90^2) = 847.18501461
+// focal_pixel = 0.3 / 0.07 * sqrt(175^2 + 89^2) = 841.420082421
+
 extension ViewController: YuvSinkListener {
     public func frameReady(sink: StreamSink, frame: SdkCoreFrame) {
-        var offSet: UnsafePointer<UInt8> = frame.data!
-        
-        var stringData = ""
-        for i in 0...frame.len {
-            stringData += "\(offSet[i]) "
+        if let frameData = frame.data {
+            let depthData = Data(bytes: frameData, count: 176*90)
+            self.depthData = depthData
+            
+//            // UI View (not working..)
+//            do {
+//                var floatArray = [Float]()
+//                for i in 0 ..< depthData.count {
+//                    floatArray.append(Float(depthData[i]) / 255.0)
+//                }
+//            }
+            
+            // debug
+            do {
+                var disparityStringData = ""
+                for i in (7_745..<7_920) { // 45th line
+                    disparityStringData += "\(depthData[i]) "
+                }
+                NSLog("YuvSinkListener length: \(frame.len), data: \(disparityStringData)")
+            }
+            
+            // save bin file
+            let doSaveBinFile = false
+            if (doSaveBinFile) {
+                count += 1;
+                if (count % 30 == 1) {
+                    let testName = "depth"
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss.SSSZ"
+                    let fileName = "\(testName)_" + dateFormatter.string(from: Date())
+                    
+                    writeToFile(data: depthData as Data, fileName: fileName)
+                }
+            }
+            
+            // save img file (not working..)
+            let doSaveImgFile = false
+            if (doSaveImgFile) {
+                count += 1;
+                if (count % 30 == 1) {
+                    let image = UIImage(data: depthData as Data)
+                    
+                    let testName = "depthMap"
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss.SSSZ"
+                    let fileName = "\(testName)_" + dateFormatter.string(from: Date()) + ".png"
+                    
+                    let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+                    if let imageFilePath = documentsURL?.createDirectory(appendPath: "Image").appendingPathComponent(fileName) {
+                        let url = URL(fileURLWithPath: imageFilePath.path)
+                        do {
+                            try image?.pngData()?.write(to: url)
+                            print("Saved image at \(url)")
+                        } catch {
+                            print("Failed to save image: \(error)")
+                        }
+                    }
+                }
+            }
+            
+            // convert to depth map
+            let doConvertToDepthMap = false
+            if (doConvertToDepthMap) {
+                let focalLength_px: Float = 847.18501461
+                let baseline_m: Float = 0.07
+                let cutOffDistance: Float = 10.0
+                
+                let buffer = UnsafeBufferPointer(start: frame.data!, count: 176 * 90);
+                let byteArray = [UInt8](buffer)
+                var floatArray = [Float]()
+                var depthByteArray = [UInt8]()
+                for i in 0 ..< byteArray.count {
+                    var depthData = focalLength_px * baseline_m / Float(byteArray[i])
+                    if depthData > cutOffDistance {
+                        depthData = cutOffDistance
+                    }
+                    floatArray.append(depthData)
+                    depthByteArray.append(UInt8(depthData / cutOffDistance * 255))
+                }
+            }
         }
-        
-        NSLog("YuvSinkListener length: \(frame.len), data: \(stringData)")
     }
     
     public func didStart(sink: StreamSink) {
@@ -365,6 +471,36 @@ extension ViewController: YuvSinkListener {
     
     public func didStop(sink: StreamSink) {
         NSLog("YuvSinkListener didStop")
+    }
+    
+    func writeToFile(data: Data, fileName: String){
+        // get path of directory
+        guard let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last else {
+            return
+        }
+        // create file url
+        let fileurl =  directory.appendingPathComponent("\(fileName).bin")
+    // if file exists then write data
+        if FileManager.default.fileExists(atPath: fileurl.path) {
+            if let fileHandle = FileHandle(forWritingAtPath: fileurl.path) {
+                // seekToEndOfFile, writes data at the last of file(appends not override)
+                fileHandle.seekToEndOfFile()
+                fileHandle.write(data)
+                fileHandle.closeFile()
+            }
+            else {
+                print("Can't open file to write.")
+            }
+        }
+        else {
+            // if file does not exist write data for the first time
+            do{
+                try data.write(to: fileurl, options: .atomic)
+            }catch {
+                print("Unable to write in new file.")
+            }
+        }
+
     }
 }
 
@@ -385,5 +521,30 @@ extension ViewController: GlRenderSinkListener {
     
     public func onContentZoneChange(contentZone: CGRect) {
         NSLog("GlRenderSinkListener onContentZoneChange content.size: \(contentZone.size)")
+    }
+}
+
+
+
+extension URL {
+    func createDirectory(appendPath: String) -> URL {
+        let path = appendingPathComponent(appendPath)
+        if !FileManager.default.fileExists(atPath: path.path) {
+            do {
+                try FileManager.default.createDirectory(atPath: path.path, withIntermediateDirectories: false, attributes: nil)
+            } catch {
+                print("Failed to create directory: \(error.localizedDescription)")
+            }
+        }
+        return path
+    }
+
+    var isDirectory: Bool {
+        (try? resourceValues(forKeys: [.isDirectoryKey]))?.isDirectory == true
+    }
+
+    var subDirectories: [URL] {
+        guard isDirectory else { return [] }
+        return (try? FileManager.default.contentsOfDirectory(at: self, includingPropertiesForKeys: nil, options: [.skipsHiddenFiles]).filter(\.isDirectory)) ?? []
     }
 }

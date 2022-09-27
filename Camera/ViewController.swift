@@ -383,7 +383,12 @@ class ViewController: UIViewController, WhiteBalanceDelegate {
 extension ViewController: YuvSinkListener {
     public func frameReady(sink: StreamSink, frame: SdkCoreFrame) {
         if let frameData = frame.data {
-            let depthData = Data(bytes: frameData, count: 176*90)
+            count += 1
+            
+            let width = 176
+            let height = 90
+            
+            let depthData = Data(bytes: frameData, count: width * height)
             self.depthData = depthData
             
 //            // UI View (not working..)
@@ -404,41 +409,53 @@ extension ViewController: YuvSinkListener {
             }
             
             // save bin file
-            let doSaveBinFile = false
+            let doSaveBinFile = true
             if (doSaveBinFile) {
-                count += 1;
                 if (count % 30 == 1) {
                     let testName = "depth"
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss.SSSZ"
-                    let fileName = "\(testName)_" + dateFormatter.string(from: Date())
+                    let fileName = "\(testName)_" + dateFormatter.string(from: Date()) + ".bin"
                     
-                    writeToFile(data: depthData as Data, fileName: fileName)
+                    writeToFile(data: depthData, folder: "Depth", fileName: fileName)
                 }
             }
             
-            // save img file (not working..)
-            let doSaveImgFile = false
+            // save img file (now working..)
+            let doSaveImgFile = true
             if (doSaveImgFile) {
-                count += 1;
-                if (count % 30 == 1) {
-                    let image = UIImage(data: depthData as Data)
-                    
-                    let testName = "depthMap"
+                let colorSpace = CGColorSpaceCreateDeviceGray()
+                let bitmapInfo = CGImageAlphaInfo.none.rawValue
+                var imageData = depthData.map { byte -> UInt8 in
+                    return byte
+                }
+                
+                guard let imageContext = CGContext(data: &imageData,
+                                                   width: width,
+                                                   height: height,
+                                                   bitsPerComponent: 8,
+                                                   bytesPerRow: width,
+                                                   space: colorSpace,
+                                                   bitmapInfo: bitmapInfo) else {
+                    return
+                }
+                
+                guard let newCGImage = imageContext.makeImage() else {
+                    return
+                }
+
+                let newUIImage = UIImage(cgImage: newCGImage)
+                DispatchQueue.main.async {
+                    self.depthImageView.backgroundColor = .blue
+                    self.depthImageView.image = newUIImage
+                }
+                
+                if (count % 30 == 1), let pngData = newUIImage.pngData() {
                     let dateFormatter = DateFormatter()
                     dateFormatter.dateFormat = "yyyy-MM-dd_HHmmss.SSSZ"
-                    let fileName = "\(testName)_" + dateFormatter.string(from: Date()) + ".png"
+                    let fileName = "depthMap_" + dateFormatter.string(from: Date()) + ".png"
                     
-                    let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-                    if let imageFilePath = documentsURL?.createDirectory(appendPath: "Image").appendingPathComponent(fileName) {
-                        let url = URL(fileURLWithPath: imageFilePath.path)
-                        do {
-                            try image?.pngData()?.write(to: url)
-                            print("Saved image at \(url)")
-                        } catch {
-                            print("Failed to save image: \(error)")
-                        }
-                    }
+                    writeToFile(data: pngData, folder: "Image", fileName: fileName)
                 }
             }
             
@@ -473,16 +490,16 @@ extension ViewController: YuvSinkListener {
         NSLog("YuvSinkListener didStop")
     }
     
-    func writeToFile(data: Data, fileName: String){
+    func writeToFile(data: Data, folder: String, fileName: String){
         // get path of directory
         guard let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).last else {
             return
         }
         // create file url
-        let fileurl =  directory.appendingPathComponent("\(fileName).bin")
-    // if file exists then write data
-        if FileManager.default.fileExists(atPath: fileurl.path) {
-            if let fileHandle = FileHandle(forWritingAtPath: fileurl.path) {
+        let filePath = directory.createDirectory(appendPath: folder).appendingPathComponent(fileName)
+        
+        if FileManager.default.fileExists(atPath: filePath.path) {
+            if let fileHandle = FileHandle(forWritingAtPath: filePath.path) {
                 // seekToEndOfFile, writes data at the last of file(appends not override)
                 fileHandle.seekToEndOfFile()
                 fileHandle.write(data)
@@ -495,12 +512,11 @@ extension ViewController: YuvSinkListener {
         else {
             // if file does not exist write data for the first time
             do{
-                try data.write(to: fileurl, options: .atomic)
+                try data.write(to: filePath, options: .atomic)
             }catch {
                 print("Unable to write in new file.")
             }
         }
-
     }
 }
 
